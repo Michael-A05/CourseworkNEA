@@ -30,10 +30,37 @@ class Scraper:
         self.database.add_supermarket(self.supermarkets)
 
         for supermarket in self.supermarkets:
-            log.info(f"Adding {supermarket.name} categories")
+            # log.info(f"Adding {supermarket.name} categories")
             html = self.get_html(url=supermarket.base_url)
             supermarket_categories = supermarket.filter_categories(html)
-            self.database.add_supermarket_category({"supermarket": supermarket.name, "supermarket_categories": supermarket_categories})
+            self.database.add_supermarket_category(
+                {"supermarket_id": supermarket.get_id(), "supermarket_categories": supermarket_categories}
+            )
+
+            categories = supermarket.get_categories()
+            for category in categories:
+                category_name = category[2]
+                log.info(f"Scraping {category_name}")
+                page = 1
+                finished = False
+
+                category_information = supermarket.get_category_information(category_name)
+                start_page_url = supermarket.base_url + category_information[1]
+
+                while not finished:
+                    url = supermarket.build_url(url=start_page_url, page=page)
+                    html = self.get_html(url=url)
+                    if html is None:
+                        finished = True
+                    else:
+                        supermarket_category_products = supermarket.filter_products(html)
+                        if len(supermarket_category_products) == 0:
+                            finished = True
+                        else:
+                            self.database.check_then_add_or_update(
+                                ""
+                            )
+                            page += 1
 
     def get_html(self, url):
         log.info(f"Scraping {url}")
