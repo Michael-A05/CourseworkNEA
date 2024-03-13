@@ -6,7 +6,6 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options
 
-
 log = logging.getLogger(__name__)
 
 
@@ -27,10 +26,12 @@ class Scraper:
         return None
 
     def scrape_cycle(self):
+        category_identification_index = 1
+        category_url_index = 2
         self.database.add_supermarket(self.supermarkets)
 
         for supermarket in self.supermarkets:
-            # log.info(f"Adding {supermarket.name} categories")
+            log.info(f"Adding {supermarket.name} categories")
             html = self.get_html(url=supermarket.base_url)
             supermarket_categories = supermarket.filter_categories(html)
             self.database.add_supermarket_category(
@@ -39,13 +40,13 @@ class Scraper:
 
             categories = supermarket.get_categories()
             for category in categories:
-                category_name = category[2]
-                log.info(f"Scraping {category_name}")
+                category_name = category[category_url_index]
+                log.info(f"Scraping {category_name} page")
                 page = 1
                 finished = False
 
                 category_information = supermarket.get_category_information(category_name)
-                start_page_url = supermarket.base_url + category_information[1]
+                start_page_url = supermarket.base_url + category_information[category_url_index]
 
                 while not finished:
                     url = supermarket.build_url(url=start_page_url, page=page)
@@ -69,7 +70,7 @@ class Scraper:
 
         options = Options()
         options.add_argument("start-maximized")
-        options.add_argument('--headless')
+        # options.add_argument('--headless')
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
         options.add_experimental_option("useAutomationExtension", False)
@@ -88,4 +89,3 @@ class Scraper:
         html = driver.page_source
         driver.quit()
         return html
-    
