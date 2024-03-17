@@ -48,5 +48,5 @@ class Supermarkets():
         return ["wheat", "soya"]
 
     def get_nutrition_pattern(self):
-        return (r"(\d+kJ|\d+kcal)|Fat\s+([\d]+\.\d+g)|Saturated Fat\s+([\d]+\.\d+g)|Carbohydrate\s+([\d]+\.\d+g)|of "
-                r"which sugars\s+([\d]+\.\d+g)|Fibre\s+([\d]+\.\d+g)|Protein\s+([\d]+\.\d+g)|Salt\s+([\d]+\.\d+g)")
+        return (r'Energy\s+(\d+kJ),\s+(\d+kcal)Fat\s+([\d.]+)gof which saturates\s+([\d.]+)gCarbohydrate\s+([\d.]+)gof '
+                r'which sugars\s+([\d.]+)gFibre\s+([\d.]+)gProtein\s+([\d.]+)gSalt\s+([\d.]+)g')
