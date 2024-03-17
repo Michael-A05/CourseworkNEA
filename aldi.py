@@ -87,9 +87,10 @@ class Aldi(Supermarkets):
             if "Nutrition information" in table_row.get_text():
                 nutrition_text = table_row.get_text().replace("Nutrition information", "").strip()
                 matches = re.findall(self.get_nutrition_pattern(), nutrition_text)
+                print(matches[0])
                 energy_kj, energy_kcal, fat, sat_fat, carb, sugars, fibre, protein, salt = matches[0]
-                product_details['energy_kj'] = float(energy_kj)
-                product_details['energy_kcal'] = float(energy_kcal)
+                product_details['energy_kj'] = float(energy_kj.replace("kJ", ""))
+                product_details['energy_kcal'] = float(energy_kcal.replace("kcal", ""))
                 product_details['fat'] = float(fat)
                 product_details['of_which_saturates'] = float(sat_fat)
                 product_details['carbohydrates'] = float(carb)
@@ -256,13 +257,14 @@ class Aldi(Supermarkets):
 #    data.update({'image': image_src})
 # print(testlist)
 
-"""
+
 aldi = Aldi()
 url = "https://groceries.aldi.co.uk/en-GB/p-village-bakery-toastie-thick-sliced-white-bread-800g/4088600253305"
 scraper = Scraper(aldi, database=None)
 html = scraper.get_html(url)
-aldi.filter_details(html)
-"""
+x = aldi.filter_details(html)
+print(x)
+
 # testing = ['𝐖𝐡𝐞𝐚𝐭 𝐅𝐥𝐨𝐮𝐫 (𝐖𝐡𝐞𝐚𝐭 𝐅𝐥𝐨𝐮𝐫', 'calcium carbonate', 'iron', 'niacin', 'thiamin)', 'water', 'salt', 'yeast', '𝐒𝐨𝐲𝐚 flour', 'preservative: calcium propionate; emulsifier: mono- and diacetyl tartaric acid esters of mono- and diglycerides of fatty acids; spirit vinegar', 'rapeseed oil', 'flour treatment agent: ascorbic acid.']
 # test = []
 # allergens = "𝐖𝐡𝐞𝐚𝐭 𝐅𝐥𝐨𝐮𝐫 𝐒𝐨𝐲𝐚"
@@ -343,6 +345,7 @@ matches = re.findall(pattern, nutritional_info)
 print(matches)
 """
 
+""""
 nutritional_info = ("Per 100g:Energy 1009kJ, 239kcalFat 2.0gof which saturates 0.5gCarbohydrate 45gof which sugars "
                     "2.9gFibre 3.6gProtein 8.3gSalt 0.87g")
 
@@ -350,6 +353,7 @@ pattern = (r'Energy\s+(\d+kJ),\s+(\d+kcal)Fat\s+([\d.]+)gof which saturates\s+([
            r'which sugars\s+([\d.]+)gFibre\s+([\d.]+)gProtein\s+([\d.]+)gSalt\s+([\d.]+)g')
 
 matches = re.findall(pattern, nutritional_info)
+print(matches[0])
 energy_kj, energy_kcal, fat, sat_fat, carb, sugars, fibre, protein, salt = matches[0]
 energy = f"{energy_kj} kJ, {energy_kcal} kcal"
 print(f"Energy: {energy}")
@@ -360,3 +364,4 @@ print(f"of which sugars: {sugars}")
 print(f"Fibre: {fibre}")
 print(f"Protein: {protein}")
 print(f"Salt: {salt}")
+"""
