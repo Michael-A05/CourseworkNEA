@@ -1,4 +1,5 @@
 from database import Database
+
 db = Database()
 
 
@@ -9,6 +10,8 @@ class Supermarkets():
         self.base_url = ""
         self.id = None
         self.categories = self.get_categories()
+        self.allergens = self.get_allergens()
+        self.nutrition_pattern = self.get_nutrition_pattern()
 
     def build_url(self, url, page):
         return ""
@@ -18,6 +21,9 @@ class Supermarkets():
 
     def filter_products(self, html):
         return []
+
+    def filter_details(self, html):
+        return {}
 
     def get_id(self):
         supermarket_object = db.get_table_object("supermarkets")
@@ -37,3 +43,10 @@ class Supermarkets():
         category_id = row.id
         category_part_url = row.supermarket_category_part_url
         return category_id, category_part_url
+
+    def get_allergens(self):
+        return ["wheat", "soya"]
+
+    def get_nutrition_pattern(self):
+        return (r"(\d+kJ|\d+kcal)|Fat\s+([\d]+\.\d+g)|Saturated Fat\s+([\d]+\.\d+g)|Carbohydrate\s+([\d]+\.\d+g)|of "
+                r"which sugars\s+([\d]+\.\d+g)|Fibre\s+([\d]+\.\d+g)|Protein\s+([\d]+\.\d+g)|Salt\s+([\d]+\.\d+g)")

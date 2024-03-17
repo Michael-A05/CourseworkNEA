@@ -51,7 +51,8 @@ class SupermarketProductDetails(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     supermarket_product_id: Mapped[int] = mapped_column(db.ForeignKey('supermarket_products.id'))
-    energy: Mapped[float]
+    energy_kj: Mapped[float]
+    energy_kcal: Mapped[float]
     fat: Mapped[float]
     of_which_saturates: Mapped[float]
     carbohydrates: Mapped[float]
@@ -59,6 +60,13 @@ class SupermarketProductDetails(Base):
     fibre: Mapped[float]
     protein: Mapped[float]
     salt: Mapped[float]
+
+class ProductAllergens(Base):
+    __tablename__ = "product_allergens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    supermarket_product_id: Mapped[int] = mapped_column(db.ForeignKey('supermarket_products.id'))
+    allergens: Mapped[str]
 
 
 class Database:
@@ -107,7 +115,8 @@ class Database:
 
             id = db.Column(db.Integer, primary_key=True)
             supermarket_product_id = db.Column(db.Integer, db.ForeignKey('supermarket_products.id'))
-            energy = db.Column(db.Float)
+            energy_kj = db.Column(db.Float)
+            energy_kcal = db.Column(db.Float)
             fat = db.Column(db.Float)
             of_which_saturates = db.Column(db.Float)
             carbohydrates = db.Column(db.Float)
@@ -165,4 +174,24 @@ class Database:
 
             self.session.commit()
 
+    def add_supermarket_category_products(self, data): # add update_necessary_checking
+        statistics = {"New": 0, "Updated": 0, "Deleted": 0}
+        table_object = self.get_table_object("supermarket_products")
 
+      #  check = (
+      #      self.session.query(table_object).filter_by().all()
+      #  )
+        with self.session as session:
+            for datum in data["supermarket_category_products"]:
+                log.info(f"Adding {datum['name']}")
+                statistics["New"] += 1
+                product = SupermarketProducts(
+                    supermarket_category_id=data["supermarket_category_id"],
+                    product_name=datum['name'],
+                    product_price=datum['price'],
+                    product_image=datum['image'],
+                    product_part_url=datum['part_url']
+                )
+                session.add(instance=product)
+
+            self.session.commit()

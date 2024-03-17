@@ -26,8 +26,9 @@ class Scraper:
         return None
 
     def scrape_cycle(self):
-        category_identification_index = 1
-        category_url_index = 2
+        category_id_index = 0
+        category_part_url_index = 1
+        category_name_index = 2
         self.database.add_supermarket(self.supermarkets)
 
         for supermarket in self.supermarkets:
@@ -40,13 +41,13 @@ class Scraper:
 
             categories = supermarket.get_categories()
             for category in categories:
-                category_name = category[category_url_index]
-                log.info(f"Scraping {category_name} page")
+                category_name = category[category_name_index]
+                log.info(f"Scraping {category_name}")
                 page = 1
                 finished = False
 
                 category_information = supermarket.get_category_information(category_name)
-                start_page_url = supermarket.base_url + category_information[category_url_index]
+                start_page_url = supermarket.base_url + category_information[category_part_url_index]
 
                 while not finished:
                     url = supermarket.build_url(url=start_page_url, page=page)
@@ -58,10 +59,13 @@ class Scraper:
                         if len(supermarket_category_products) == 0:
                             finished = True
                         else:
-                            self.database.check_then_add_or_update(
-                                ""
+                            self.database.add_supermarket_category_products(
+                                {"supermarket_category_id": category_information[category_id_index],
+                                 "supermarket_category_products": supermarket_category_products}
                             )
+                            supermarket_product_details = supermarket.filter_details(html)
                             page += 1
+                            finished = True # temporary - just want it to run once - will remove
 
     def get_html(self, url):
         log.info(f"Scraping {url}")
