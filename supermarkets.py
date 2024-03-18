@@ -1,5 +1,9 @@
+import logging
 from database import Database
+
 db = Database()
+
+log = logging.getLogger(__name__)
 
 
 class Supermarkets():
@@ -11,6 +15,7 @@ class Supermarkets():
         self.categories = self.get_categories()
         self.allergens = self.get_allergens()
         self.nutrition_pattern = self.get_nutrition_pattern()
+        log.info(f"{self.name} loaded")
 
     def build_url(self, url, page):
         return ""
@@ -46,8 +51,7 @@ class Supermarkets():
     def get_allergens(self):
         return [
             "peanuts", "almonds", "walnuts", "cashews", "pistachios", "milk", "eggs", "wheat", "barley", "soy",
-            "mustard", "lupin", "rye", ""
-
+            "mustard", "lupin", "rye",
         ]
 
     def get_nutrition_pattern(self):

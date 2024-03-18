@@ -1,10 +1,11 @@
-import logging
 import os
+import logging
 from pathlib import Path
-from aldi import Aldi
+
 from scraper import Scraper
 from database import Database
 
+from aldi import Aldi
 
 logs_file = Path(Path().resolve(), "log.text")
 logs_file.touch(exist_ok=True)

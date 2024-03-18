@@ -29,6 +29,7 @@ class Scraper:
         category_id_index = 0
         category_part_url_index = 1
         category_name_index = 2
+
         self.database.add_supermarket(self.supermarkets)
 
         for supermarket in self.supermarkets:
@@ -42,12 +43,12 @@ class Scraper:
             categories = supermarket.get_categories()
             for category in categories:
                 category_name = category[category_name_index]
-                log.info(f"Scraping {category_name}")
-                page = 1
-                finished = False
+                log.info(f"Retrieving {category_name} products")
 
                 category_information = supermarket.get_category_information(category_name)
                 start_page_url = supermarket.base_url + category_information[category_part_url_index]
+                page = 1
+                finished = False
 
                 while not finished:
                     url = supermarket.build_url(url=start_page_url, page=page)
@@ -63,9 +64,26 @@ class Scraper:
                                 {"supermarket_category_id": category_information[category_id_index],
                                  "supermarket_category_products": supermarket_category_products}
                             )
-                            supermarket_product_details = supermarket.filter_details(html)
+                            # new code here
+                            supermarket_products_object = self.database.get_table_object("supermarket_products")
+                            products = self.database.session.query(supermarket_products_object).filter_by(supermarket_category_id=category_information[category_id_index]).all()
+                            for product in products:
+                                product_id, product_part_url = product.id, product.product_part_url
+
+                                url = supermarket.base_url + product_part_url
+                                html = self.get_html(url=url)
+                                supermarket_product_details = supermarket.filter_product_details(html)
+                                self.database.add_product_information(
+                                    {"supermarket_product_id": product_id,
+                                     "supermarket_product_details": supermarket_product_details
+                                     }
+                                )
+                                self.database.add_product_allergy_information(
+                                    {"supermarket_product_id": product_id,
+                                     "supermarket_product_details": supermarket_product_details
+                                     }
+                                )
                             page += 1
-                            finished = True # temporary - just want it to run once - will remove
 
     def get_html(self, url):
         log.info(f"Scraping {url}")
@@ -75,6 +93,7 @@ class Scraper:
         options = Options()
         options.add_argument("start-maximized")
         # options.add_argument('--headless')
+        options.add_argument("--disable-gpu")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("excludeSwitches", ["enable-logging"])
         options.add_experimental_option("useAutomationExtension", False)

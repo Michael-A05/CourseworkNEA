@@ -1,5 +1,4 @@
 import logging
-import re
 from datetime import datetime
 
 import sqlalchemy as db
@@ -43,7 +42,6 @@ class SupermarketProducts(Base):
     created: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
     last_updated: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
     is_available: Mapped[bool]
-    timestamp: Mapped[datetime] = mapped_column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
 
 
 class SupermarketProductDetails(Base):
@@ -61,8 +59,9 @@ class SupermarketProductDetails(Base):
     protein: Mapped[float]
     salt: Mapped[float]
 
-class ProductAllergens(Base):
-    __tablename__ = "product_allergens"
+
+class SupermarketProductAllergens(Base):
+    __tablename__ = "supermarket_product_allergens"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     supermarket_product_id: Mapped[int] = mapped_column(db.ForeignKey('supermarket_products.id'))
@@ -108,7 +107,6 @@ class Database:
             created = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
             last_updated = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
             is_available = db.Column(db.Boolean)
-            timestamp = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now())
 
         class SupermarketProductDetails(self.Base):
             __tablename__ = "supermarket_product_details"
@@ -125,6 +123,13 @@ class Database:
             protein = db.Column(db.Float)
             salt = db.Column(db.Float)
 
+        class SupermarketProductAllergens(self.Base):
+            __tablename__ = "supermarket_product_allergens"
+
+            id = db.Column(db.Integer, primary_key=True)
+            supermarket_product_id = db.Column(db.Integer, db.ForeignKey('supermarket_products.id'))
+            allergen = db.Column(db.String)
+
         self.Base.metadata.create_all(self.engine)
         log.info("Database tables loaded")
 
@@ -133,18 +138,18 @@ class Database:
         return self.Base.metadata.tables.get(table_name)
 
     def add_supermarket(self, supermarkets):
-        table_object = self.get_table_object(table_name="supermarkets")
+        supermarkets_table = self.get_table_object(table_name="supermarkets")
 
         with self.session as session:
             for supermarket in supermarkets:
                 exists = (
-                    self.session.query(table_object).filter_by(supermarket_name=supermarket.name).first()
+                    self.session.query(supermarkets_table).filter_by(supermarket_name=supermarket.name).first()
                 )
                 if exists is None:
                     log.info(f"Adding {supermarket.name} to the 'Supermarkets' table")
                     supermarket = Supermarkets(
                         supermarket_name=supermarket.name,
-                        supermarket_logo=supermarket.logo,      # supermarket.return_logo
+                        supermarket_logo=supermarket.logo,
                         supermarket_base_url=supermarket.base_url
                     )
                     session.add(instance=supermarket)
@@ -154,17 +159,17 @@ class Database:
             self.session.commit()
 
     def add_supermarket_category(self, data):
-        table_object = self.get_table_object(table_name="supermarket_categories")
+        categories_table = self.get_table_object(table_name="supermarket_categories")
 
         with self.session as session:
             for datum in data["supermarket_categories"]:
                 exists = (
-                    self.session.query(table_object).filter_by(supermarket_category_name=datum['name']).first()
+                    self.session.query(categories_table).filter_by(supermarket_category_name=datum['name']).first()
                 )
                 if exists is None:
                     log.info(f"Adding {datum['name']} to 'Super market categories'")
                     supermarket_category = SupermarketCategories(
-                        supermarket_id=1,
+                        supermarket_id=data["supermarket_id"],
                         supermarket_category_name=datum['name'],
                         supermarket_category_part_url=datum['part_url']
                     )
@@ -174,13 +179,13 @@ class Database:
 
             self.session.commit()
 
-    def add_supermarket_category_products(self, data): # add update_necessary_checking
+    def add_supermarket_category_products(self, data):  # add update_necessary_checking
         statistics = {"New": 0, "Updated": 0, "Deleted": 0}
-        table_object = self.get_table_object("supermarket_products")
+        products_table = self.get_table_object("supermarket_products")
 
-      #  check = (
-      #      self.session.query(table_object).filter_by().all()
-      #  )
+        #  check = (
+        #      self.session.query(table_object).filter_by().all()
+        #  )
         with self.session as session:
             for datum in data["supermarket_category_products"]:
                 log.info(f"Adding {datum['name']}")
@@ -193,5 +198,40 @@ class Database:
                     product_part_url=datum['part_url']
                 )
                 session.add(instance=product)
+
+            self.session.commit()
+
+    def add_product_information(self, data):
+        # information_table = self.get_table_object("supermarket_product_details")
+
+        with self.session as session:
+            for datum in data["supermarket_product_details"]:
+                supermarket_product_details = SupermarketProductDetails(
+                    supermarket_product_id=data["supermarket_product_id"],
+                    energy_kj=datum['energy_kj'],
+                    energy_kcal=datum['energy_kcal'],
+                    fat=datum['fat'],
+                    of_which_saturates=datum['of_which_saturates'],
+                    carbohydrates=datum['carbohydrates'],
+                    of_which_sugars=datum['of_which_sugars'],
+                    fibre=datum['fibre'],
+                    protein=datum['protein'],
+                    salt=datum['salt']
+                )
+                session.add(instance=supermarket_product_details)
+
+            self.session.commit()
+
+    def add_product_allergy_information(self, data):
+        # allergy_information_table = self.get_table_object("supermarket_product_allergens")
+
+        with self.session as session:
+            for datum in data["supermarket_product_details"]:
+                for allergen in datum['allergens']:
+                    supermarket_product_allergens = SupermarketProductAllergens(
+                        supermarket_product_id=data["supermarket_product_id"],
+                        allergen=allergen
+                    )
+                    session.add(instance=supermarket_product_allergens)
 
             self.session.commit()
