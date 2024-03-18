@@ -1,5 +1,4 @@
 from database import Database
-
 db = Database()
 
 
@@ -22,7 +21,7 @@ class Supermarkets():
     def filter_products(self, html):
         return []
 
-    def filter_details(self, html):
+    def filter_product_details(self, html):
         return {}
 
     def get_id(self):
@@ -45,7 +44,11 @@ class Supermarkets():
         return category_id, category_part_url
 
     def get_allergens(self):
-        return ["wheat", "soya"]
+        return [
+            "peanuts", "almonds", "walnuts", "cashews", "pistachios", "milk", "eggs", "wheat", "barley", "soy",
+            "mustard", "lupin", "rye", ""
+
+        ]
 
     def get_nutrition_pattern(self):
         return (r'Energy\s+(\d+kJ),\s+(\d+kcal)Fat\s+([\d.]+)gof which saturates\s+([\d.]+)gCarbohydrate\s+([\d.]+)gof '
