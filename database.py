@@ -65,7 +65,7 @@ class SupermarketProductAllergens(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     supermarket_product_id: Mapped[int] = mapped_column(db.ForeignKey('supermarket_products.id'))
-    allergens: Mapped[str]
+    allergen: Mapped[str]
 
 
 class Database:
@@ -202,36 +202,32 @@ class Database:
             self.session.commit()
 
     def add_product_information(self, data):
-        # information_table = self.get_table_object("supermarket_product_details")
 
         with self.session as session:
-            for datum in data["supermarket_product_details"]:
-                supermarket_product_details = SupermarketProductDetails(
-                    supermarket_product_id=data["supermarket_product_id"],
-                    energy_kj=datum['energy_kj'],
-                    energy_kcal=datum['energy_kcal'],
-                    fat=datum['fat'],
-                    of_which_saturates=datum['of_which_saturates'],
-                    carbohydrates=datum['carbohydrates'],
-                    of_which_sugars=datum['of_which_sugars'],
-                    fibre=datum['fibre'],
-                    protein=datum['protein'],
-                    salt=datum['salt']
-                )
-                session.add(instance=supermarket_product_details)
-
+            datum = data["supermarket_product_details"]
+            supermarket_product_details = SupermarketProductDetails(
+                supermarket_product_id=data["supermarket_product_id"],
+                energy_kj=datum['energy_kj'],
+                energy_kcal=datum['energy_kcal'],
+                fat=datum['fat'],
+                of_which_saturates=datum['of_which_saturates'],
+                carbohydrates=datum['carbohydrates'],
+                of_which_sugars=datum['of_which_sugars'],
+                fibre=datum['fibre'],
+                protein=datum['protein'],
+                salt=datum['salt']
+            )
+            session.add(instance=supermarket_product_details)
             self.session.commit()
 
     def add_product_allergy_information(self, data):
-        # allergy_information_table = self.get_table_object("supermarket_product_allergens")
 
         with self.session as session:
-            for datum in data["supermarket_product_details"]:
-                for allergen in datum['allergens']:
-                    supermarket_product_allergens = SupermarketProductAllergens(
-                        supermarket_product_id=data["supermarket_product_id"],
-                        allergen=allergen
-                    )
-                    session.add(instance=supermarket_product_allergens)
-
+            datum = data["supermarket_product_details"]
+            for allergen in datum['allergens']:
+                supermarket_product_allergen = SupermarketProductAllergens(
+                    supermarket_product_id=data["supermarket_product_id"],
+                    allergen=allergen
+                )
+                session.add(instance=supermarket_product_allergen)
             self.session.commit()

@@ -51,9 +51,9 @@ class Supermarkets():
     def get_allergens(self):
         return [
             "peanuts", "almonds", "walnuts", "cashews", "pistachios", "milk", "eggs", "wheat", "barley", "soy",
-            "mustard", "lupin", "rye",
+            "mustard", "lupin", "rye", "sulphites"
         ]
 
     def get_nutrition_pattern(self):
-        return (r'Energy\s+(\d+kJ),\s+(\d+kcal)Fat\s+([\d.]+)gof which saturates\s+([\d.]+)gCarbohydrate\s+([\d.]+)gof '
-                r'which sugars\s+([\d.]+)gFibre\s+([\d.]+)gProtein\s+([\d.]+)gSalt\s+([\d.]+)g')
+        return (r"(Fat|of which saturates|Carbohydrate|of which sugars|Fibre|Protein|Salt)(\s+[<]?\d+[.]?\d+|\s+\d+)|("
+                r"\d+kJ|\d+kcal)")

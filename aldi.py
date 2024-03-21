@@ -86,8 +86,8 @@ class Aldi(Supermarkets):
 
             if "Nutrition information" in table_row.get_text():
                 nutrition_text = table_row.get_text().replace("Nutrition information", "").strip()
-                matches = re.findall(self.get_nutrition_pattern(), nutrition_text)
-                energy_kj, energy_kcal, fat, sat_fat, carb, sugars, fibre, protein, salt = matches[0]
+                values = self.format_nutritional_information(nutrition_text)
+                energy_kj, energy_kcal, fat, sat_fat, carb, sugars, fibre, protein, salt = values
                 product_details['energy_kj'] = float(energy_kj.replace("kJ", ""))
                 product_details['energy_kcal'] = float(energy_kcal.replace("kcal", ""))
                 product_details['fat'] = float(fat)
@@ -98,7 +98,7 @@ class Aldi(Supermarkets):
                 product_details['protein'] = float(protein)
                 product_details['salt'] = float(salt)
 
-        return product_details
+        return product_details if product_details else None
 
     def format_product_image_src(self, src):
         char_to_replace = "\\"
@@ -114,9 +114,34 @@ class Aldi(Supermarkets):
             product.update({'image': self.format_product_image_src(product['image'])})
         return product_list
 
-#aldi = Aldi()
-#url = "https://groceries.aldi.co.uk/en-GB/p-village-bakery-toastie-thick-sliced-white-bread-800g/4088600253305"
-#scraper = Scraper(aldi, database=None)
-#html = scraper.get_html(url)
-#x = aldi.filter_product_details(html)
-#print(x)
+    def format_nutritional_information(self, nutrition_text):
+        log.info("Locating nutritional information")
+        formatted_values = []
+        matches = re.findall(self.nutrition_pattern, nutrition_text)
+        if matches:
+            energy_kj = matches[0][2]
+            energy_kcal = matches[1][2]
+            fat = matches[2][1]
+            fat_sat = matches[3][1]
+            carb = matches[4][1]
+            sugars = matches[5][1]
+            fibre = matches[6][1]
+            protein = matches[7][1]
+            salt = matches[8][1]
+
+            matches = energy_kj, energy_kcal, fat, fat_sat, carb, sugars, fibre, protein, salt
+            for value in matches:
+                formatted_value = value.replace("<", "").strip()
+                formatted_values.append(formatted_value)
+        else:
+            log.info("Match was not found")
+
+        return formatted_values
+
+aldi = Aldi()
+scraper = Scraper(aldi, database=None)
+url = "https://groceries.aldi.co.uk/en-GB/p-specially-selected-sweet-pointed-peppers-min-2-pack/4061464251700"
+html = scraper.get_html(url)
+x = aldi.filter_product_details(html)
+print(x)
+

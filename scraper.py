@@ -53,36 +53,45 @@ class Scraper:
                 while not finished:
                     url = supermarket.build_url(url=start_page_url, page=page)
                     html = self.get_html(url=url)
-                    if html is None:
+                    if html is None: # in which case would html return None
                         finished = True
                     else:
                         supermarket_category_products = supermarket.filter_products(html)
                         if len(supermarket_category_products) == 0:
-                            finished = True
-                        else:
-                            self.database.add_supermarket_category_products(
-                                {"supermarket_category_id": category_information[category_id_index],
-                                 "supermarket_category_products": supermarket_category_products}
-                            )
-                            # new code here
                             supermarket_products_object = self.database.get_table_object("supermarket_products")
-                            products = self.database.session.query(supermarket_products_object).filter_by(supermarket_category_id=category_information[category_id_index]).all()
+                            products = self.database.session.query(supermarket_products_object).filter_by(
+                                supermarket_category_id=category_information[category_id_index]
+                            ).all()
                             for product in products:
                                 product_id, product_part_url = product.id, product.product_part_url
 
                                 url = supermarket.base_url + product_part_url
                                 html = self.get_html(url=url)
                                 supermarket_product_details = supermarket.filter_product_details(html)
-                                self.database.add_product_information(
-                                    {"supermarket_product_id": product_id,
-                                     "supermarket_product_details": supermarket_product_details
-                                     }
-                                )
-                                self.database.add_product_allergy_information(
-                                    {"supermarket_product_id": product_id,
-                                     "supermarket_product_details": supermarket_product_details
-                                     }
-                                )
+                                if supermarket_product_details is not None:
+                                    self.database.add_product_information(
+                                        {"supermarket_product_id": product_id,
+                                         "supermarket_product_details": supermarket_product_details
+                                         }
+                                    )
+                                else:
+                                    log.info(f"{product.product_name}has no nutritional information")
+                                    continue
+                                if "allergens" in supermarket_product_details:
+                                    self.database.add_product_allergy_information(
+                                        {"supermarket_product_id": product_id,
+                                         "supermarket_product_details": supermarket_product_details
+                                         }
+                                    )
+                                else:
+                                    log.info(f"{product.product_name}has no allergens")
+                                    continue
+                            finished = True
+                        else:
+                            self.database.add_supermarket_category_products(
+                                {"supermarket_category_id": category_information[category_id_index],
+                                 "supermarket_category_products": supermarket_category_products}
+                            )
                             page += 1
 
     def get_html(self, url):
@@ -112,3 +121,4 @@ class Scraper:
         html = driver.page_source
         driver.quit()
         return html
+
