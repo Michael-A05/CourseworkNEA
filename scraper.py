@@ -3,7 +3,10 @@ import time
 
 import requests
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 
 log = logging.getLogger(__name__)
@@ -48,51 +51,47 @@ class Scraper:
                 category_information = supermarket.get_category_information(category_name)
                 start_page_url = supermarket.base_url + category_information[category_part_url_index]
                 page = 1
+                x = 1
                 finished = False
 
                 while not finished:
                     url = supermarket.build_url(url=start_page_url, page=page)
-                    html = self.get_html(url=url)
-                    if html is None: # in which case would html return None
-                        finished = True
-                    else:
-                        supermarket_category_products = supermarket.filter_products(html)
-                        if len(supermarket_category_products) == 0:
-                            supermarket_products_object = self.database.get_table_object("supermarket_products")
-                            products = self.database.session.query(supermarket_products_object).filter_by(
-                                supermarket_category_id=category_information[category_id_index]
-                            ).all()
-                            for product in products:
-                                product_id, product_part_url = product.id, product.product_part_url
+                    html = self.get_page(url=url)
+                    if html is None:
+                        supermarket_products_object = self.database.get_table_object("supermarket_products")
+                        products = self.database.session.query(supermarket_products_object).filter_by(
+                            supermarket_category_id=category_information[category_id_index]
+                        ).all()
+                        for product in products:
+                            product_id, product_part_url = product.id, product.product_part_url
 
-                                url = supermarket.base_url + product_part_url
-                                html = self.get_html(url=url)
-                                supermarket_product_details = supermarket.filter_product_details(html)
-                                if supermarket_product_details is not None:
-                                    self.database.add_product_information(
-                                        {"supermarket_product_id": product_id,
-                                         "supermarket_product_details": supermarket_product_details
-                                         }
-                                    )
-                                else:
-                                    log.info(f"{product.product_name}has no nutritional information")
-                                    continue
+                            url = supermarket.base_url + product_part_url
+                            html = self.get_html(url=url)
+                            supermarket_product_details = supermarket.filter_product_details(html)
+                            if supermarket_product_details is not None:
+                                self.database.add_product_information(
+                                    {"supermarket_product_id": product_id,
+                                     "supermarket_product_details": supermarket_product_details
+                                     }
+                                )
                                 if "allergens" in supermarket_product_details:
                                     self.database.add_product_allergy_information(
                                         {"supermarket_product_id": product_id,
                                          "supermarket_product_details": supermarket_product_details
                                          }
                                     )
-                                else:
-                                    log.info(f"{product.product_name}has no allergens")
-                                    continue
-                            finished = True
-                        else:
-                            self.database.add_supermarket_category_products(
-                                {"supermarket_category_id": category_information[category_id_index],
-                                 "supermarket_category_products": supermarket_category_products}
-                            )
-                            page += 1
+                            else:
+                                log.info(f"{product.product_name} has no nutritional information")
+                                continue
+                        finished = True
+                    else:
+                        supermarket_category_products = supermarket.filter_products(html)
+                        self.database.add_supermarket_category_products(
+                            {"supermarket_category_id": category_information[category_id_index],
+                             "supermarket_category_products": supermarket_category_products}
+                        )
+                        page += 1
+
 
     def get_html(self, url):
         log.info(f"Scraping {url}")
@@ -122,3 +121,31 @@ class Scraper:
         driver.quit()
         return html
 
+    def get_page(self, url):
+        log.info(f"Scraping {url}")
+        user_agent = ("Mozilla/5.0 (iPhone; CPU iPhone OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) "
+                      "Mobile/15E148")
+
+        options = Options()
+        options.add_argument("start-maximized")
+        options.add_argument("--disable-gpu")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("excludeSwitches", ["enable-logging"])
+        options.add_experimental_option("useAutomationExtension", False)
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--no-sandbox")
+        options.add_argument(f"user-agent={user_agent}")
+
+        try:
+            driver = webdriver.Chrome(options=options)
+            driver.get(url)
+            wait = WebDriverWait(driver, 10)
+            element = wait.until(
+                EC.visibility_of_element_located((By.CLASS_NAME, "product-tile"))
+            )
+            time.sleep(5)
+            html = driver.page_source
+            driver.quit()
+            return html
+        except TimeoutException:
+            return None
