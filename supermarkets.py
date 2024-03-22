@@ -6,7 +6,7 @@ db = Database()
 log = logging.getLogger(__name__)
 
 
-class Supermarkets():
+class Supermarkets:
     def __init__(self):
         self.name = ""
         self.logo = ""
@@ -38,20 +38,38 @@ class Supermarkets():
             return None
 
     def get_categories(self):
-        supermarket_categories_object = db.get_table_object("supermarket_categories")
-        return db.session.query(supermarket_categories_object).filter_by(supermarket_id=self.get_id()).all()
+        try:
+            supermarket_id = self.get_id()
+            if supermarket_id is not None:
+                supermarket_categories_object = db.get_table_object("supermarket_categories")
+                return db.session.query(supermarket_categories_object).filter_by(supermarket_id=supermarket_id).all()
+            else:
+                log.warning("Supermarket ID not found")
+                return []
+        except Exception as e:
+            log.exception(f"Error retrieving categories: {e}")
+            return []
 
     def get_category_information(self, category_name):
-        supermarket_categories_object = db.get_table_object("supermarket_categories")
-        row = db.session.query(supermarket_categories_object).filter_by(supermarket_category_name=category_name).first()
-        category_id = row.id
-        category_part_url = row.supermarket_category_part_url
-        return category_id, category_part_url
+        try:
+            supermarket_categories_object = db.get_table_object("supermarket_categories")
+            row = db.session.query(supermarket_categories_object).filter_by(
+                supermarket_category_name=category_name).first()
+            if row:
+                category_id = row.id
+                category_part_url = row.supermarket_category_part_url
+                return category_id, category_part_url
+            else:
+                log.warning(f"Category '{category_name}' not found")
+                return None, None
+        except Exception as e:
+            log.exception(f"Error retrieving category information for '{category_name}': {e}")
+            return None, None
 
     def get_allergens(self):
         return [
             "peanuts", "almonds", "walnuts", "cashews", "pistachios", "milk", "eggs", "wheat", "barley", "soy",
-            "mustard", "lupin", "rye", "sulphites"
+            "mustard", "lupin", "rye", "sulphites", "fish", "shellfish", "celery", "sesame", "molluscs"
         ]
 
     def get_nutrition_pattern(self):

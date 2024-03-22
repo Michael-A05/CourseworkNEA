@@ -51,7 +51,6 @@ class Scraper:
                 category_information = supermarket.get_category_information(category_name)
                 start_page_url = supermarket.base_url + category_information[category_part_url_index]
                 page = 1
-                x = 1
                 finished = False
 
                 while not finished:
@@ -91,7 +90,6 @@ class Scraper:
                              "supermarket_category_products": supermarket_category_products}
                         )
                         page += 1
-
 
     def get_html(self, url):
         log.info(f"Scraping {url}")

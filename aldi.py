@@ -118,30 +118,30 @@ class Aldi(Supermarkets):
         log.info("Locating nutritional information")
         formatted_values = []
         matches = re.findall(self.nutrition_pattern, nutrition_text)
-        if matches:
-            energy_kj = matches[0][2]
-            energy_kcal = matches[1][2]
-            fat = matches[2][1]
-            fat_sat = matches[3][1]
-            carb = matches[4][1]
-            sugars = matches[5][1]
-            fibre = matches[6][1]
-            protein = matches[7][1]
-            salt = matches[8][1]
 
-            matches = energy_kj, energy_kcal, fat, fat_sat, carb, sugars, fibre, protein, salt
-            for value in matches:
-                formatted_value = value.replace("<", "").strip()
-                formatted_values.append(formatted_value)
+        if matches:
+            nutritional_labels = ["energy_kj", "energy_kcal", "fat", "fat_sat", "carb", "sugars", "fibre", "protein",
+                                  "salt"]
+            default_value = 0
+            for label in nutritional_labels:
+                if label == "energy_kj" or label == "energy_kcal":
+                    try:
+                        value = matches[nutritional_labels.index(label)][2]
+                        formatted_value = str(value).replace("<", "").strip()
+                        formatted_values.append(formatted_value)
+                    except IndexError:
+                        log.info(f"Value not found for {label}, setting default value.")
+                        formatted_values.append(str(default_value))
+                else:
+                    try:
+                        value = matches[nutritional_labels.index(label)][1]
+                        formatted_value = str(value).replace("<", "").strip()
+                        formatted_values.append(formatted_value)
+                    except IndexError:
+                        log.info(f"Value not found for {label}, setting default value.")
+                        formatted_values.append(str(default_value))
         else:
             log.info("Match was not found")
 
         return formatted_values
-
-aldi = Aldi()
-scraper = Scraper(aldi, database=None)
-url = "https://groceries.aldi.co.uk/en-GB/p-specially-selected-sweet-pointed-peppers-min-2-pack/4061464251700"
-html = scraper.get_html(url)
-x = aldi.filter_product_details(html)
-print(x)
 
