@@ -68,11 +68,15 @@ class Scraper:
                             html = self.get_html(url=url)
                             supermarket_product_details = supermarket.filter_product_details(html)
                             if supermarket_product_details is not None:
-                                self.database.add_product_information(
-                                    {"supermarket_product_id": product_id,
-                                     "supermarket_product_details": supermarket_product_details
-                                     }
-                                )
+                                try:
+                                    self.database.add_product_information(
+                                        {"supermarket_product_id": product_id,
+                                         "supermarket_product_details": supermarket_product_details
+                                         }
+                                    )
+                                except KeyError as e:
+                                    log.error(f"Error processing product {product_id}: {e}")
+
                                 if "allergens" in supermarket_product_details:
                                     self.database.add_product_allergy_information(
                                         {"supermarket_product_id": product_id,
@@ -80,7 +84,7 @@ class Scraper:
                                          }
                                     )
                             else:
-                                log.info(f"{product.product_name} has no nutritional information")
+                                log.warning(f"{product.product_name} has no nutritional information")
                                 continue
                         finished = True
                     else:
@@ -99,6 +103,7 @@ class Scraper:
         options = Options()
         options.add_argument("start-maximized")
         # options.add_argument('--headless')
+        options.add_argument("--disable-site-isolation-trials")
         options.add_argument("--disable-gpu")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("excludeSwitches", ["enable-logging"])

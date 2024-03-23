@@ -44,7 +44,7 @@ class Supermarkets:
                 supermarket_categories_object = db.get_table_object("supermarket_categories")
                 return db.session.query(supermarket_categories_object).filter_by(supermarket_id=supermarket_id).all()
             else:
-                log.warning("Supermarket ID not found")
+                log.error("Supermarket ID not found")
                 return []
         except Exception as e:
             log.exception(f"Error retrieving categories: {e}")
@@ -74,4 +74,4 @@ class Supermarkets:
 
     def get_nutrition_pattern(self):
         return (r"(Fat|of which saturates|Carbohydrate|of which sugars|Fibre|Protein|Salt)(\s+[<]?\d+[.]?\d+|\s+\d+)|("
-                r"\d+kJ|\d+kcal)")
+                r"\d+[.]?[kK][jJ]|\d+[.]?kcal)")
