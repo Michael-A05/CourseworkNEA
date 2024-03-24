@@ -154,7 +154,7 @@ class Database:
                     )
                     session.add(instance=supermarket)
                 else:
-                    log.info(f"{supermarket.name} is already in the table")
+                    log.warning(f"{supermarket.name} is already in the table")
 
             self.session.commit()
 

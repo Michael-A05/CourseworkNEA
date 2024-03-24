@@ -49,44 +49,23 @@ class Scraper:
                 log.info(f"Retrieving {category_name} products")
 
                 category_information = supermarket.get_category_information(category_name)
+                if category_information[category_part_url_index] == "/en-GB/specially-selected?":
+                    continue
+                if category_information[category_part_url_index] == "/en-GB/vegan-range?":
+                    continue
+                if category_information[category_part_url_index] == "/en-GB/bakery?":
+                    continue
+
                 start_page_url = supermarket.base_url + category_information[category_part_url_index]
                 page = 1
-                finished = False
+                finished_category = False
 
-                while not finished:
+                while not finished_category:
                     url = supermarket.build_url(url=start_page_url, page=page)
                     html = self.get_page(url=url)
                     if html is None:
-                        supermarket_products_object = self.database.get_table_object("supermarket_products")
-                        products = self.database.session.query(supermarket_products_object).filter_by(
-                            supermarket_category_id=category_information[category_id_index]
-                        ).all()
-                        for product in products:
-                            product_id, product_part_url = product.id, product.product_part_url
-
-                            url = supermarket.base_url + product_part_url
-                            html = self.get_html(url=url)
-                            supermarket_product_details = supermarket.filter_product_details(html)
-                            if supermarket_product_details is not None:
-                                try:
-                                    self.database.add_product_information(
-                                        {"supermarket_product_id": product_id,
-                                         "supermarket_product_details": supermarket_product_details
-                                         }
-                                    )
-                                except KeyError as e:
-                                    log.error(f"Error processing product {product_id}: {e}")
-
-                                if "allergens" in supermarket_product_details:
-                                    self.database.add_product_allergy_information(
-                                        {"supermarket_product_id": product_id,
-                                         "supermarket_product_details": supermarket_product_details
-                                         }
-                                    )
-                            else:
-                                log.warning(f"{product.product_name} has no nutritional information")
-                                continue
-                        finished = True
+                        finished_category = True
+                        log.info(f"Moving to next category")
                     else:
                         supermarket_category_products = supermarket.filter_products(html)
                         self.database.add_supermarket_category_products(
@@ -94,6 +73,37 @@ class Scraper:
                              "supermarket_category_products": supermarket_category_products}
                         )
                         page += 1
+
+                if finished_category:
+                    supermarket_products_object = self.database.get_table_object("supermarket_products")
+                    products = self.database.session.query(supermarket_products_object).filter_by(
+                        supermarket_category_id=category_information[category_id_index]
+                    ).all()
+                    for product in products:
+                        product_id, product_part_url = product.id, product.product_part_url
+
+                        url = supermarket.base_url + product_part_url
+                        html = self.get_html(url=url)
+                        supermarket_product_details = supermarket.filter_product_details(html)
+                        if supermarket_product_details is not None:
+                            try:
+                                self.database.add_product_information(
+                                    {"supermarket_product_id": product_id,
+                                     "supermarket_product_details": supermarket_product_details
+                                     }
+                                )
+                            except KeyError as e:
+                                log.error(f"Error processing product {product_id}: {e}")
+
+                            if "allergens" in supermarket_product_details:
+                                self.database.add_product_allergy_information(
+                                    {"supermarket_product_id": product_id,
+                                     "supermarket_product_details": supermarket_product_details
+                                     }
+                                )
+                        else:
+                            log.warning(f"{product.product_name} has no nutritional information")
+                            continue
 
     def get_html(self, url):
         log.info(f"Scraping {url}")
