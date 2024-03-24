@@ -53,8 +53,6 @@ class Scraper:
                     continue
                 if category_information[category_part_url_index] == "/en-GB/vegan-range?":
                     continue
-                if category_information[category_part_url_index] == "/en-GB/bakery?":
-                    continue
 
                 start_page_url = supermarket.base_url + category_information[category_part_url_index]
                 page = 1
@@ -93,7 +91,12 @@ class Scraper:
                                      }
                                 )
                             except KeyError as e:
-                                log.error(f"Error processing product {product_id}: {e}")
+                                log.error(f"KeyError processing product {product_id}: {e}. "
+                                          f"Details: {supermarket_product_details}")
+                                continue
+                            except Exception as ex:
+                                log.error(f"Error processing product {product_id}: {ex}")
+                                continue
 
                             if "allergens" in supermarket_product_details:
                                 self.database.add_product_allergy_information(
@@ -125,6 +128,7 @@ class Scraper:
         try:
             driver = webdriver.Chrome(options=options)
             driver.get(url)
+
         except WebDriverException as e:
             log.error(f"Selenium exception: {e.msg}")
             return None
@@ -156,9 +160,18 @@ class Scraper:
             element = wait.until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "product-tile"))
             )
-            time.sleep(5)
             html = driver.page_source
             driver.quit()
             return html
+
         except TimeoutException:
+            log.warning(f"Timeout waiting for element")
             return None
+
+        except Exception as e:
+            log.error(f"An error occurred: {e}")
+            return None
+
+        finally:
+            if driver:
+                driver.quit()

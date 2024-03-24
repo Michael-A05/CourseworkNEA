@@ -1,4 +1,5 @@
 import logging
+import re
 from database import Database
 
 db = Database()
@@ -29,12 +30,73 @@ class Supermarkets:
     def filter_product_details(self, html):
         return {}
 
-    def get_id(self):
-        supermarket_object = db.get_table_object("supermarkets")
-        row = db.session.query(supermarket_object).filter_by(supermarket_name=self.name).first()
-        if row:
-            return row.id
+    def format_product_image_src(self, src):
+        char_to_replace = "\\"
+        return src.replace(char_to_replace, "/")
+
+    def format_product_price(self, price_string):
+        char_to_remove = "£"
+        price_string = price_string.replace(char_to_remove, "")
+        return float(price_string)
+
+    def format_supermarket_category_products(self, product_list):
+        for product in product_list:
+            product.update({'image': self.format_product_image_src(product['image'])})
+        return product_list
+
+    def format_nutritional_information(self, nutrition_text):
+        formatted_values = []
+        matches = re.findall(self.nutrition_pattern, nutrition_text)
+
+        if matches:
+            if len(matches) == 2 or len(matches) == 9:
+                nutritional_labels = ["energy_kj", "energy_kcal", "fat", "fat_sat", "carb", "sugars", "fibre",
+                                      "protein",
+                                      "salt"]
+                default_value = 0
+                for label in nutritional_labels:
+                    if label == "energy_kj" or label == "energy_kcal":
+                        try:
+                            value = matches[nutritional_labels.index(label)][2].lower()
+                            if value == '':
+                                log.warning(
+                                    f"Value for {nutritional_labels[nutritional_labels.index(label) + 1]} may be "
+                                    f"incorrect")
+                                raise IndexError
+                            else:
+                                formatted_value = str(value).replace("<", "").strip()
+                                formatted_value = str(formatted_value).replace(".", "").strip()
+                                formatted_values.append(formatted_value)
+                        except IndexError:
+                            log.error(f"Value not found for {label}, setting default value.")
+                            formatted_values.append(str(default_value))
+                    else:
+                        try:
+                            value = matches[nutritional_labels.index(label)][1]
+                            formatted_value = str(value).replace("<", "").strip()
+                            formatted_values.append(formatted_value)
+                        except IndexError:
+                            log.error(f"Value not found for {label}, setting default value.")
+                            formatted_values.append(str(default_value))
+            else:
+                log.warning("Nutritional information was not in valid format")
+                formatted_values = ['0', '0', '0', '0', '0', '0', '0', '0', '0']
         else:
+            log.warning("Match was not found")
+            formatted_values = ['0', '0', '0', '0', '0', '0', '0', '0', '0']
+
+        return formatted_values
+
+    def get_id(self):
+        try:
+            supermarket_object = db.get_table_object("supermarkets")
+            row = db.session.query(supermarket_object).filter_by(supermarket_name=self.name).first()
+            if row:
+                return row.id
+            else:
+                return None
+        except Exception as e:
+            log.error(f"Error retrieving ID for {self.name}: {e}")
             return None
 
     def get_categories(self):
@@ -44,10 +106,10 @@ class Supermarkets:
                 supermarket_categories_object = db.get_table_object("supermarket_categories")
                 return db.session.query(supermarket_categories_object).filter_by(supermarket_id=supermarket_id).all()
             else:
-                log.error("Supermarket ID not found")
+                log.warning("Supermarket ID not found")
                 return []
         except Exception as e:
-            log.exception(f"Error retrieving categories: {e}")
+            log.exception(f"Error retrieving categories for {self.name}: {e}")
             return []
 
     def get_category_information(self, category_name):
@@ -60,7 +122,7 @@ class Supermarkets:
                 category_part_url = row.supermarket_category_part_url
                 return category_id, category_part_url
             else:
-                log.warning(f"Category '{category_name}' not found")
+                log.warning(f"{category_name} category not found")
                 return None, None
         except Exception as e:
             log.exception(f"Error retrieving category information for '{category_name}': {e}")

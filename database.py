@@ -175,7 +175,7 @@ class Database:
                     )
                     session.add(instance=supermarket_category)
                 else:
-                    log.info(f"{datum['name']} is already in the table")
+                    log.warning(f"{datum['name']} is already in the table")
 
             self.session.commit()
 

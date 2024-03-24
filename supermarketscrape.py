@@ -1,11 +1,10 @@
-import os
 import logging
+import os
 from pathlib import Path
-
 from scraper import Scraper
 from database import Database
-
 from aldi import Aldi
+
 
 logs_file = Path(Path().resolve(), "log.text")
 logs_file.touch(exist_ok=True)
@@ -20,6 +19,9 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 db = Database()
-supermarkets = [Aldi()]
+aldi = Aldi()
+
+supermarkets = [aldi]
 scraper = Scraper(supermarkets=supermarkets, database=db)
 scraper.scrape()
+
