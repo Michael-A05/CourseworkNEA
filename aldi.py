@@ -64,8 +64,8 @@ class Aldi(Supermarkets):
                             if product_part_url is not None:
                                 product['part_url'] = product_part_url
                         except AttributeError as e:
-                            log.error(f"Error filtering part_url for {product['name']}: {e}")
-                            product['part_url'] = "Error"
+                            log.warning(f"Error filtering part_url for {product['name']}: {e}")
+                            continue
                     for product_image in divtag.find('figure'):
                         product['image'] = product_image.get('src')
                     supermarket_category_products.append(product)
