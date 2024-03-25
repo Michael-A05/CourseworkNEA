@@ -128,8 +128,7 @@ class Scraper:
         try:
             driver = webdriver.Chrome(options=options)
             driver.get(url)
-
-        except WebDriverException as e:
+        except (WebDriverException, Exception) as e:
             log.error(f"Selenium exception: {e.msg}")
             return None
 
@@ -160,18 +159,13 @@ class Scraper:
             element = wait.until(
                 EC.visibility_of_element_located((By.CLASS_NAME, "product-tile"))
             )
+            time.sleep(5)
             html = driver.page_source
             driver.quit()
             return html
-
         except TimeoutException:
-            log.warning(f"Timeout waiting for element")
+            log.warning(f"Time out waiting for an element")
             return None
-
         except Exception as e:
-            log.error(f"An error occurred: {e}")
+            log.error(f"An error occurred while fetching the page: {e}")
             return None
-
-        finally:
-            if driver:
-                driver.quit()
