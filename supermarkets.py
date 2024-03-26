@@ -1,9 +1,9 @@
 import logging
 import re
+
 from database import Database
 
 db = Database()
-
 log = logging.getLogger(__name__)
 
 
@@ -16,7 +16,6 @@ class Supermarkets:
         self.categories = self.get_categories()
         self.allergens = self.get_allergens()
         self.nutrition_pattern = self.get_nutrition_pattern()
-        log.info(f"{self.name} loaded")
 
     def build_url(self, url, page):
         return ""
@@ -30,11 +29,50 @@ class Supermarkets:
     def filter_product_details(self, html):
         return {}
 
+    def assign_product_values(self, nutritional_values, allergens):
+        product_details = {}
+
+        try:
+            energy_kj, energy_kcal, fat, sat_fat, carb, sugars, fibre, protein, salt = nutritional_values
+            product_details['energy_kj'] = float(energy_kj)
+            product_details['energy_kcal'] = float(energy_kcal)
+            product_details['fat'] = float(fat)
+            product_details['of_which_saturates'] = float(sat_fat)
+            product_details['carbohydrates'] = float(carb)
+            product_details['of_which_sugars'] = float(sugars)
+            product_details['fibre'] = float(fibre)
+            product_details['protein'] = float(protein)
+            product_details['salt'] = float(salt)
+            product_details['allergens'] = list(allergens)
+
+            return product_details
+
+        except ValueError as e:
+            log.error(f"Error processing nutritional values: {e}")
+            return None
+
+        except Exception as ex:
+            log.error(f"An error occurred while trying to process product details for a {self.name} product: {ex}")
+            return None
+
+    def assign_default_values(self, allergens):
+        log.info(f"Assigning default values")
+        product_details = {'energy_kj': 0.0, 'energy_kcal': 0.0, 'fat': 0.0, 'of_which_saturates': 0.0,
+                           'carbohydrates': 0.0, 'of_which_sugars': 0.0, 'fibre': 0.0, 'protein': 0.0, 'salt': 0.0,
+                           'allergens': allergens}
+        return product_details
+
     def format_product_image_src(self, src):
+
         char_to_replace = "\\"
         return src.replace(char_to_replace, "/")
 
-    def format_product_price(self, price_string):
+    def format_product_price_pence(self, price_string):
+        char_to_remove = "p"
+        price_string = price_string.replace(char_to_remove, "")
+        return float(price_string)
+
+    def format_product_price_pound(self, price_string):
         char_to_remove = "£"
         price_string = price_string.replace(char_to_remove, "")
         return float(price_string)
@@ -62,12 +100,12 @@ class Supermarkets:
                                 log.warning(
                                     f"Value for {nutritional_labels[nutritional_labels.index(label) + 1]} may be "
                                     f"incorrect")
-                                raise IndexError
+                                raise ValueError
                             else:
                                 formatted_value = str(value).replace("<", "").strip()
                                 formatted_value = str(formatted_value).replace(".", "").strip()
                                 formatted_values.append(formatted_value)
-                        except IndexError:
+                        except ValueError:
                             log.error(f"Value not found for {label}, setting default value.")
                             formatted_values.append(str(default_value))
                     else:
@@ -135,5 +173,4 @@ class Supermarkets:
         ]
 
     def get_nutrition_pattern(self):
-        return (r"(Fat|of which saturates|Carbohydrate|of which sugars|Fibre|Protein|Salt)(\s+[<]?\d+[.]?\d+|\s+\d+)|("
-                r"\d+[.]?[kK][jJ]|\d+[.]?kcal)")
+        return r""
