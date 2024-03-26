@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 class Morrisons(Supermarkets):
     def __init__(self):
         super().__init__()
-        self.name = Morrisons
+        self.name = "Morrisons"
         self.logo = "https://groceries.morrisons.com/static/morrisonslogo-fe24a.svg"
         self.base_url = "https://groceries.morrisons.com"
         log.info(f"{self.name} loaded")
