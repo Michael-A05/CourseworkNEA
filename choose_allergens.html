@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Choose Allergens{% endblock %}
+{% block content %}
+    <h1>Choose Your Allergens</h1>
+    <h2>Your Selected Allergens:</h2>
+    <ul>
+        {% for choice in user_choices %}
+            <li>
+                {{ choice.allergen.name }}
+                <form action="{% url 'remove_allergen' choice.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit">Remove</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    <h2>Select New Allergens:</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+{% endblock %}

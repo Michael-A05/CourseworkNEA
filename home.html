@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Welcome to Priceless</h1>
+    
+    <p>Priceless is your shopping companion that helps you compare groceries from your selected supermarkets and suggests the cheapest products. We understand the importance of catering to your dietary needs, which is why we also filter products based on whether they contain allergens that you have declared being allergic to.</p>
+    
+{% if user.is_authenticated %}
+  Hi {{ user.username }}!
+  <form action="{% url 'logout' %}" method="post">
+  {% csrf_token %}
+  <button type="submit">Log Out</button>
+</form>
+{% else %}
+  <p>You are not logged in</p>
+  <a href="{% url 'login' %}">Log In</a> 
+    <p><a href="{% url 'password_reset' %}">Password Reset</a></p>
+  <a href="{% url 'signup' %}">Sign Up</a>
+{% endif %}
+{% endblock %}

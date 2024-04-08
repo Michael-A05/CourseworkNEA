@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Main Page{% endblock %}
+
+{% block content %}
+      <h1>Welcome to Your User Home Page!</h1>
+  <p>Here you can manage your account:</p>
+<p><a href="{% url 'password_change' %}">Change Password</a></p>
+    <p><a href="{% url 'choose_allergens' %}">Choose Allergens</a></p>
+      <form action="{% url 'logout' %}" method="post">
+  {% csrf_token %}
+  <button type="submit">Log Out</button>
+</form>
+{% endblock %}
